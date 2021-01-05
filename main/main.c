@@ -14,8 +14,9 @@ static void init_ulp_program(void);
 void app_main(void)
 {
     printf("Starting main proc...\n");
-    ulp_pulse_count &= UINT16_MAX;
-    printf("Pulse Count = %d \n", ulp_pulse_count);
+    printf("Pulse Count = %d \n", ulp_pulse_count & UINT16_MAX);
+    printf("Last reading = %d \n", ulp_last_reading & UINT16_MAX);
+    printf("Last result = %d \n", ulp_last_result & UINT16_MAX);
 
     printf("Starting ULP...\n");
     init_ulp_program();
@@ -49,7 +50,7 @@ static void init_ulp_program(void)
 
     // Set low and high thresholds, as per the readings from 49E hall sensor from water meter
     ulp_low_threshold = 1600;
-    ulp_high_threshold = 1790;
+    ulp_high_threshold = 1800;
 
     // Run ulp program every 20ms
     ulp_set_wakeup_period(0, 20000);

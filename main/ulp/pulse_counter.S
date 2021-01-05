@@ -17,6 +17,9 @@ low_threshold:
 high_threshold:
     .long 0
 
+.global last_reading
+last_reading:
+    .long 0
 
 .global last_result
 last_result:
@@ -34,10 +37,20 @@ entry:
     move r3, last_result
     ld r2, r3, 0
 
+    // Reset registers
+    move r0, 0
+    stage_rst
+
 measure:
     // Measure value and accumulate in r0
     adc r1, 0, adc_channel + 1
+
+    // Store last reading
+    move r2, last_reading
+    st r1, r2, 0
+
     add r0, r0, r1
+
     stage_inc 1
     jumps measure, adc_oversampling_factor, lt
 
@@ -86,7 +99,7 @@ cycle_complete:
     // Increse pulse count
     move r1, pulse_count
     ld r2, r1, 0
-    add r2, r1, 1
+    add r2, r2, 1
     st r2, r1, 0
 
     halt
