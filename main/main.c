@@ -3,6 +3,8 @@
 #include "driver/rtc_io.h"
 #include "esp32/ulp.h"
 #include "esp_sleep.h" 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "ulp_main.h"
 
 extern const uint8_t ulp_main_bin_start[] asm("_binary_ulp_main_bin_start");
@@ -10,25 +12,51 @@ extern const uint8_t ulp_main_bin_end[] asm("_binary_ulp_main_bin_end");
 
 static void init_ulp_program(void);
 //static void update_pulse_count(void);
+static void dump_debug_out();
+
+RTC_DATA_ATTR int total_pulse_count = 0;
 
 void app_main(void)
 {
-    printf("Starting main proc...\n");
-    printf("Pulse Count = %d \n", ulp_pulse_count & UINT16_MAX);
-    printf("Last reading = %d \n", ulp_last_reading & UINT16_MAX);
-    printf("Last result = %d \n", ulp_last_result & UINT16_MAX);
+    esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
+    if (cause != ESP_SLEEP_WAKEUP_ULP) {
+        printf("Not ULP wakeup\n");
+        init_ulp_program();
+    } else {
+        printf("Deep sleep wakeup\n");
+        printf("Pulse Count = %d", ulp_pulse_count & UINT16_MAX);
+        printf(", Last result = %d", ulp_last_result & UINT16_MAX);
+        printf(", debug data = %d \n", ulp_debug_data & UINT16_MAX);
+        
+        total_pulse_count += ulp_pulse_count & UINT16_MAX;
+        printf("Total pulse count: %d \n", total_pulse_count);
+    }
 
     printf("Starting ULP...\n");
     init_ulp_program();
 
-    const int wakeup_time_sec = 5;
-    printf("Enabling timer wakeup for main proc \n");
-    esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
+    // dump_debug_out();
+
+    // const int wakeup_time_sec = 10;
+    // printf("Enabling timer wakeup for main proc \n");
+    // esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
 
     printf("Going to sleep..\n");
     fflush(stdout);
     ESP_ERROR_CHECK(esp_sleep_enable_ulp_wakeup());
     esp_deep_sleep_start();
+}
+
+static void dump_debug_out()
+{
+    while (true)
+    {
+        printf("Pulse Count = %d", ulp_pulse_count & UINT16_MAX);
+        printf(", Last reading = %d", ulp_debug_data & UINT16_MAX);
+        printf(", Last result = %d \n", ulp_last_result & UINT16_MAX);
+
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
 }
 
 static void init_ulp_program(void)
@@ -51,6 +79,7 @@ static void init_ulp_program(void)
     // Set low and high thresholds, as per the readings from 49E hall sensor from water meter
     ulp_low_threshold = 1600;
     ulp_high_threshold = 1800;
+    ulp_wakeup_threshold = 10;
 
     // Run ulp program every 20ms
     ulp_set_wakeup_period(0, 20000);

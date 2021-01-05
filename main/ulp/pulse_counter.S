@@ -1,5 +1,5 @@
+#include "soc/rtc_cntl_reg.h"
 #include "soc/soc_ulp.h"     // for WRITE_RTC_REG
-#include "soc/rtc_io_reg.h"  // for RTC_GPIO_*
 
 /* constants */
 .set adc_channel, 0 // ADC Channel 0, GPIO36
@@ -17,8 +17,8 @@ low_threshold:
 high_threshold:
     .long 0
 
-.global last_reading
-last_reading:
+.global debug_data
+debug_data:
     .long 0
 
 .global last_result
@@ -27,6 +27,10 @@ last_result:
 
 .global pulse_count
 pulse_count:
+    .long 0
+
+.global wakeup_threshold
+wakeup_threshold:
     .long 0
 
 /* code */
@@ -44,11 +48,6 @@ entry:
 measure:
     // Measure value and accumulate in r0
     adc r1, 0, adc_channel + 1
-
-    // Store last reading
-    move r2, last_reading
-    st r1, r2, 0
-
     add r0, r0, r1
 
     stage_inc 1
@@ -102,4 +101,24 @@ cycle_complete:
     add r2, r2, 1
     st r2, r1, 0
 
+    // Wake-up main SoC if pulse count exceeds the threshold
+    move r1, wakeup_threshold
+    ld r3, r1, 0
+    sub r3, r3, r2
+    jump wakeup, eq
+
+    halt
+
+wakeup:
+    // Check if the system can be woken up
+	READ_RTC_FIELD(RTC_CNTL_LOW_POWER_ST_REG, RTC_CNTL_RDY_FOR_WAKEUP)
+	and r0, r0, 1
+	jump exit, eq
+
+	// Wake up the SoC, end program
+	wake
+	WRITE_RTC_FIELD(RTC_CNTL_STATE0_REG, RTC_CNTL_ULP_CP_SLP_TIMER_EN, 0)
+	halt
+
+exit:
     halt
