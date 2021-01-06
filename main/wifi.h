@@ -1,0 +1,1 @@
+static void connect_wifi();
