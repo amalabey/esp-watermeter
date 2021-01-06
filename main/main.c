@@ -14,7 +14,10 @@ extern const uint8_t ulp_main_bin_end[] asm("_binary_ulp_main_bin_end");
 static void init_ulp_program(void);
 static void start_ulp_program(void);
 static void update_pulse_count(void);
+
+#ifdef ULP_DEBUG
 static void dump_debug_out(void);
+#endif
 
 RTC_DATA_ATTR int total_pulse_count = 0;
 
@@ -33,6 +36,10 @@ void app_main(void)
     }
 
     start_ulp_program();
+    
+#ifdef ULP_DEBUG
+    dump_debug_out();
+#endif
 
     const int wakeup_time_sec = 60;
     printf("Enabling timer wakeup for main proc \n");
@@ -44,6 +51,7 @@ void app_main(void)
     esp_deep_sleep_start();
 }
 
+#ifdef ULP_DEBUG
 static void dump_debug_out()
 {
     while (true)
@@ -55,6 +63,7 @@ static void dump_debug_out()
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
+#endif
 
 static void update_pulse_count()
 {
@@ -64,6 +73,12 @@ static void update_pulse_count()
 
     total_pulse_count += ulp_pulse_count & UINT16_MAX;
     printf("Total pulse count: %d \n", total_pulse_count);
+
+    const sensor_data_t data = {
+        .water_consumption = total_pulse_count
+    };
+    log_data(&data);
+
     ulp_pulse_count = 0;
 }
 
@@ -83,7 +98,7 @@ static void init_ulp_program(void)
     // Set constant thresholds
     ulp_low_threshold = 1600;
     ulp_high_threshold = 1800;
-    ulp_wakeup_threshold = 10;
+    ulp_wakeup_threshold = 3;
 
     // Run ulp program every 20ms
     ulp_set_wakeup_period(0, 20000);  

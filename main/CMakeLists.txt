@@ -1,7 +1,4 @@
-idf_component_register(
-    SRCS "data_logger.c" "main.c"
-    INCLUDE_DIRS ""
-)
+idf_component_register(SRCS "main.c")
 
 #
 # ULP support additions to component CMakeLists.txt.

@@ -16,6 +16,9 @@
     "xstring": "c",
     "xutility": "c",
     "string": "c",
-    "string_view": "c"
+    "string_view": "c",
+    "nvs_flash.h": "c",
+    "iosfwd": "c",
+    "xlocbuf": "c"
   }
 }

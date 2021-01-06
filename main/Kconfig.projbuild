@@ -19,3 +19,23 @@ menu "Wifi Configuration"
             Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
 endmenu
 
+menu "MQTT Configuration"
+
+    config ESP_MQTT_BROKER
+        string "MQTT Broker Url"
+        default "mqtt://mqtt-server"
+        help
+            Url to MQTT Server
+
+    config ESP_MQTT_USER
+        string "MQTT User"
+        default "mqtt-user"
+        help
+            MQTT user.
+
+    config ESP_MQTT_PASSWORD
+        string "MQTT Password"
+        default "mqtt-password"
+        help
+            MQTT password.
+endmenu
