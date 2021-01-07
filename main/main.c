@@ -19,6 +19,13 @@ static void update_pulse_count(void);
 static void dump_debug_out(void);
 #endif
 
+// Config  parameters
+#define WAKEUP_PULSE_THRESHOLD      CONFIG_ESP_WAKEUP_PULSE_THRESHOLD
+#define WAKEUP_TIME_THRESHOLD       CONFIG_ESP_WAKEUP_TIME_THRESHOLD
+#define ULP_WAKEUP_TIME_THRESHOLD   CONFIG_ULP_WAKEUP_TIME_THRESHOLD
+#define ULP_PULSE_HIGH_THRESHOLD    CONFIG_ULP_PULSE_HIGH_THRESHOLD
+#define ULP_PULSE_LOW_THRESHOLD     CONFIG_ULP_PULSE_LOW_THRESHOLD
+
 RTC_DATA_ATTR int total_pulse_count = 0;
 
 void app_main(void)
@@ -41,9 +48,8 @@ void app_main(void)
     dump_debug_out();
 #endif
 
-    const int wakeup_time_sec = 60;
     printf("Enabling timer wakeup for main proc \n");
-    esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
+    esp_sleep_enable_timer_wakeup(WAKEUP_TIME_THRESHOLD * 1000000);
 
     printf("Going to sleep..\n");
     fflush(stdout);
@@ -96,12 +102,12 @@ static void init_ulp_program(void)
     adc1_ulp_enable();
 
     // Set constant thresholds
-    ulp_low_threshold = 1600;
-    ulp_high_threshold = 1800;
-    ulp_wakeup_threshold = 3;
+    ulp_low_threshold = ULP_PULSE_LOW_THRESHOLD;
+    ulp_high_threshold = ULP_PULSE_HIGH_THRESHOLD;
+    ulp_wakeup_threshold = WAKEUP_PULSE_THRESHOLD;
 
-    // Run ulp program every 20ms
-    ulp_set_wakeup_period(0, 20000);  
+    // Run ulp program every x number of microseconds
+    ulp_set_wakeup_period(0, ULP_WAKEUP_TIME_THRESHOLD);  
 
     // Disconnect GPIO12 and GPIO15 to remove current drain through
     rtc_gpio_isolate(GPIO_NUM_12);

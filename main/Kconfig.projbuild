@@ -39,3 +39,36 @@ menu "MQTT Configuration"
         help
             MQTT password.
 endmenu
+
+menu "Pulse Capture Configuration"
+
+    config ESP_WAKEUP_PULSE_THRESHOLD
+        int "Main Proc Wakeup Pulse Count"
+        default "1000"
+        help
+            Pulse threshold to wakeup main processor and transmit data
+
+    config ESP_WAKEUP_TIME_THRESHOLD
+        int "Main Proc Wakeup time threshold in seconds"
+        default "3600"
+        help
+            Main processor will be woken up every ESP_WAKEUP_TIME_THRESHOLD seconds and transmit data
+    
+    config ULP_WAKEUP_TIME_THRESHOLD
+        int "ULP Proc Wakeup time threshold in microseconds"
+        default "20000"
+        help
+            ULP Program runs every ULP_WAKEUP_TIME_THRESHOLD microseconds to poll pulses
+    
+    config ULP_PULSE_HIGH_THRESHOLD
+        int "High threshold for ADC to trigger signal HIGH"
+        default "1800"
+        help
+            ULP Program detects signal as HIGH if the ADC value reading above this limit
+    
+    config ULP_PULSE_LOW_THRESHOLD
+        int "High threshold for ADC to trigger signal LOW"
+        default "1600"
+        help
+            ULP Program detects signal as LOW if the ADC value reading below this limit
+endmenu
